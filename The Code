@@ -1,0 +1,124 @@
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12,11,5,4,3,2);
+const int numReadings = 20;
+int readings[numReadings];
+int index = 0;
+float total = 0;
+float average = 0;
+const int sensorPin = A0;
+const int  buttonPin = 6;    
+
+float prevAvg;
+float FprevAvg;
+int sensorVal;
+int buttonPushCounter = 0;   
+int buttonState = 0;         
+int lastButtonState = 0;     
+
+const int FnumReadings = 20;
+int Freadings[FnumReadings];
+int Findex = 0;
+float Ftotal = 0;
+float Faverage = 0;
+
+
+
+void setup() 
+{
+  for (int thisReading = 0; thisReading < numReadings; thisReading++)
+    readings[thisReading] = 0;
+  for (int FthisReading = 0; FthisReading < FnumReadings; FthisReading++)
+    Freadings[FthisReading] = 0;
+  Serial.begin(9600);
+  lcd.setCursor(0,0);
+  lcd.print("Temperature:");
+  pinMode(buttonPin, INPUT);
+  lcd.print("Temperature: ");
+  lcd.begin(16,2);
+  
+  
+}
+
+
+void loop()
+{
+  lcd.setCursor(0,0);
+  lcd.print("Temperature:");
+  
+  sensorVal = analogRead(sensorPin);
+  float voltage = (sensorVal/1024.0) * 5.0;
+  float tempC = (voltage- .5) * 100;
+  float tempF = (tempC * 1.8) + 32;
+  float prevTempF;
+  Ftotal = Ftotal - Freadings[Findex];
+  total = total - readings[index];
+  readings[index]= tempC;
+  Freadings[Findex]= tempF;
+  total= total + readings[index];
+  Ftotal= Ftotal + Freadings[Findex];
+  index = index +1;
+  Findex = Findex +1;
+  if(index >= numReadings){
+    index = 0;
+}
+  if(Findex >= FnumReadings){
+    Findex = 0;
+  }
+  average = total / numReadings;
+  Faverage = Ftotal / FnumReadings;
+  buttonState = digitalRead(buttonPin);
+  if (buttonState != lastButtonState) {
+    
+    if (buttonState == HIGH) {
+      
+   
+     
+      buttonPushCounter++;
+      
+    } 
+    else 
+    {
+    
+      
+      
+    }
+  }
+  
+  lastButtonState = buttonState;
+
+  
+
+  if (buttonPushCounter % 2 == 0) 
+  {
+     
+    if (average - prevAvg >= .5 || prevAvg - average >= .5)
+   { 
+    Serial.print("C");
+     lcd.setCursor(0,1);
+    lcd.print(average);
+    lcd.setCursor(7,1);
+    lcd.print("C");
+    delay(20);
+   }
+  }  
+  else
+  {
+ 
+   
+   
+     if (Faverage - FprevAvg >= 1.0 || FprevAvg - Faverage >= 1.0)
+      {
+       Serial.print("f");
+       lcd.setCursor(0,1);
+       lcd.print(Faverage);
+       lcd.setCursor(7,1);
+       lcd.print("F"); 
+       delay(20);
+    }
+   }
+  
+prevAvg = average;
+FprevAvg = Faverage;
+delay(15);
+
+}
